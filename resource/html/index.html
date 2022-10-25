@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>Document</title>
+    <!-- 这里注意要将等号后面的换成自己的秘钥哟 -->
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=KYLO624hcCPsw57FbQy8x2yoshzGOzF6">
+
+    </script>
+
+    <style type="text/css">
+        html{height:100%}
+        body{height:100%;margin:0px;padding:0px}
+        #container{height:100%}
+    </style>
+</head>
+<body>
+<div id="container" style="height: 80%"></div>
+<button style="width: 70px; height: 20px;" type="submit" id="all">All</button>
+<button style="width: 70px; height: 20px;" type="submit" id="sbj">Region</button>
+<button class="process" type="submit" id="xzq">Process</button>
+<button style="width: 70px; height: 20px;" type="submit" id="crg">Next</button>
+<button style="width: 70px; height: 20px;" type="submit" id="vie">View</button>
+<button style="width: 90px; height: 20px;" type="submit" id="pipt">ProcessInput</button>
+<button style="width: 90px; height: 20px;" type="submit" id="getSame">GetSame</button>
+<button style="width: 90px; height: 20px;" type="submit" id="proSame">ProSame</button>
+<input style="width: 100px; height: 20px;" id="nameget"/>
+</body>
+<script>
+
+    const ok = 'ok';
+    const no = 'no';
+    let regions = [];
+    let sameRegions = [];
+    let regionAll = [];
+    let regLevelOne = [];
+    let regLevelTwo = [];
+    let regLevelThr = [];
+    let regLevelFou = [];
+
+    var map = new BMap.Map("container");
+    map.centerAndZoom(new BMap.Point(116.403765, 39.914850), 5);
+
+    // 控件：用了迷你型的鱼骨控件
+    // 地图事件：添加滚轮缩放
+    map.addControl(new BMap.NavigationControl({type: BMAP_NAVIGATION_CONTROL_SMALL}));
+    map.enableScrollWheelZoom()
+    //4:鼠标滚动控制缩放
+
+    function createXMLHttpRequest(){
+        xmlhttp=new XMLHttpRequest();
+    }
+
+    document.getElementById('all').addEventListener('click', function () {
+        createXMLHttpRequest();
+        xmlhttp.open("GET", "http://127.0.0.1:8888/comp//get/region/all", true);
+        xmlhttp.onreadystatechange = function () {
+            if(xmlhttp.readyState === 4 ){
+                regionAll = JSON.parse(xmlhttp.responseText);
+                console.log(regionAll[0].name)
+            }
+        };
+        xmlhttp.send(null);
+
+        for (let region in regionAll) {
+            if (region.level === 1) {
+                regLevelOne.push(region);
+            }else if (region.level === 2) {
+                regLevelTwo.push(region)
+            }else if (region.level === 3) {
+                regLevelThr.push(region)
+            }else {
+                regLevelFou.push(region)
+            }
+        }
+
+    }, true);
+
+    document.getElementById('sbj').addEventListener('click', function () {
+        createXMLHttpRequest();
+        xmlhttp.open("GET","http://127.0.0.1:8888/comp/get/all/region",true); //true:异步，false:同步
+
+        xmlhttp.onreadystatechange = function () {
+            if(xmlhttp.readyState === 4 ){
+                regions = JSON.parse(xmlhttp.responseText);
+                console.log(regions[0].name, "regions:", regions.length)
+            }
+        };
+        xmlhttp.send(null);
+
+    },true);
+
+    document.getElementById('xzq').addEventListener('click', function () {
+        createXMLHttpRequest();
+        if (regions.length === 0) {
+            throw "Regions is null";
+        }
+        let region = regions[0];
+        getMapPoint(region, 1);
+    }, true);
+
+    document.getElementById("crg").addEventListener('click', function () {
+        saveErrorRegion(regions[0].name)
+        regions.splice(0, 1);
+        console.log('Next: ', regions[0].name)
+    }, true);
+
+    document.getElementById("vie").addEventListener('click', function () {
+        let val = document.getElementById('nameget').value;
+        viewDivision(val);
+        console.log(sameRegions[0], "regions:", sameRegions.length)
+    }, true)
+
+    document.getElementById("pipt").addEventListener('click', function () {
+        createXMLHttpRequest()
+        let value = document.getElementById('nameget').value;
+        getMapToDB(value);
+    })
+
+    document.getElementById("getSame").addEventListener('click', function () {
+        createXMLHttpRequest()
+        xmlhttp.open("GET","http://127.0.0.1:8888/comp/get/same/region",true); //true:异步，false:同步
+
+        xmlhttp.onreadystatechange = function () {
+            if(xmlhttp.readyState === 4 ){
+                sameRegions = JSON.parse(xmlhttp.responseText);
+                console.log(sameRegions[0], "regions:", sameRegions.length)
+            }
+        };
+        xmlhttp.send(null);
+    }, true)
+
+    document.getElementById("proSame").addEventListener('click', function () {
+        createXMLHttpRequest()
+        processSameData();
+    })
+
+    function processSameData() {
+        this.bdary = new window.BMap.Boundary();
+        bdary.get(sameRegions[0], function(rs) {
+            var count = rs.boundaries.length; //行政区域的点有多少个
+            if (count === 0) {
+                sameRegions.splice(0, 1);
+                console.log('Region not exist! Next: ', sameRegions[0]);
+                return;
+            }
+            let points = [];
+            let pointArray = [];
+            let param = {
+                "name": "",
+                "points": points
+            }
+            map.clearOverlays();
+            for (var i = 0; i < count; i++) {
+                var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+                map.addOverlay(ply);
+                map.setViewport(ply.getPath());
+                pointArray = pointArray.concat(ply.getPath());
+                points[i] = pointArray;
+            }
+            param.name = sameRegions[0];
+            param.points = points;
+            xmlhttp.open('POST', "http://127.0.0.1:8888/comp/prodiv", true);
+            xmlhttp.setRequestHeader("Content-type","application/json;charset=UTF-8");
+            xmlhttp.send(JSON.stringify(param))
+            console.log('save: ', sameRegions[0],' surplus: ', sameRegions.length, ' Next: ', sameRegions[1])
+            sameRegions.splice(0, 1)
+        });
+    }
+
+    function getMapToDB(val) {
+        this.bdary = new window.BMap.Boundary();
+        bdary.get(val, function(rs) {
+            var count = rs.boundaries.length; //行政区域的点有多少个
+            if (count === 0) {
+                console.log('未能获取当前输入行政区域');
+                return;
+            }
+            let points = [];
+            let pointArray = [];
+            let param = {
+                "name": "",
+                "points": points
+            }
+            map.clearOverlays();
+            for (var i = 0; i < count; i++) {
+                var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+                map.addOverlay(ply);
+                map.setViewport(ply.getPath());
+                pointArray = pointArray.concat(ply.getPath());
+                points[i] = pointArray;
+            }
+            param.name = val;
+            param.points = points;
+            xmlhttp.open('POST', "http://127.0.0.1:8888/comp/prodiv", true);
+            xmlhttp.setRequestHeader("Content-type","application/json;charset=UTF-8");
+            xmlhttp.send(JSON.stringify(param))
+        });
+    }
+
+    function viewDivision(division) {
+        this.bdary = new window.BMap.Boundary();
+        bdary.get(division, function(rs) {
+            var count = rs.boundaries.length; //行政区域的点有多少个
+            if (count === 0) {
+                console.log('未能获取当前输入行政区域');
+                return;
+            }
+            let points = [];
+            let pointArray = [];
+            let param = {
+                "name": "",
+                "points": points
+            };
+            map.clearOverlays();
+            for (var i = 0; i < count; i++) {
+                var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+                map.addOverlay(ply);
+                map.setViewport(ply.getPath());
+            }
+            param.name = ar;
+            param.points = points;
+            let p = param.points;
+            for (let i = p.length; i > 0; i--) {
+                if (i !== p.length) {
+
+                    p[i].splice(0, p[i -1].length)
+
+                }
+            }
+        });
+    }
+
+    function getMapPoint(region, theNum) {
+        var ar = region.name;
+        this.bdary = new window.BMap.Boundary();
+        bdary.get(ar, function(rs){
+            var count = rs.boundaries.length; //行政区域的点有多少个
+            if (count === 0) {
+                if (theNum === 1 || theNum === 2) {
+                    processXzq(region, theNum++);
+                    return;
+                }else {
+                    regions.splice(0, 1);
+                    saveErrorRegion(ar);
+                    console.log('未能获取当前输入行政区域');
+                    return;
+                }
+            }
+            let points = [];
+            let pointArray = [];
+            let param = {
+                "name": "",
+                "points": points
+            }
+            map.clearOverlays();
+            for (var i = 0; i < count; i++) {
+                var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+                map.addOverlay(ply);
+                map.setViewport(ply.getPath());
+                pointArray = pointArray.concat(ply.getPath());
+                points[i] = pointArray;
+            }
+            param.name = ar;
+            param.points = points;
+            let p = param.points;
+            for (let i = p.length; i > 0; i--) {
+                if (i !== p.length) {
+
+                    p[i].splice(0, p[i -1].length)
+
+                }
+            }
+
+            xmlhttp.open('POST', "http://127.0.0.1:8888/comp/prodiv", true);
+            xmlhttp.setRequestHeader("Content-type","application/json;charset=UTF-8");
+            xmlhttp.send(JSON.stringify(param))
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    regions.splice(0, 1);
+                    console.log("Save:", ar, "next:", regions[0].name, "regions:", regions.length);
+                    return Boolean(xmlhttp.responseText);
+                }
+            };
+
+            return ok;
+
+        });
+
+    }
+
+    function processXzq(region, theNum) {
+        let regLen = regionAll.length;
+        let regionName = region.name;
+        for (let i = 0; i < regLen; i++) {
+            if (regionAll[i].id === region.pid) {
+                if (regionAll[i].name === '市辖区' || regionAll[i].name === '市辖县' || regionAll[i].name === '县') {
+                    for (let j = 0; j < regLen; j++) {
+                        if (regionAll[i].pid === regionAll[j].id) {
+                            region.name = regionAll[j].name + regionName;
+                            getMapPoint(region, theNum);
+                            return;
+                        }
+                    }
+                }
+                region.name = regionAll[i].name + regionName;
+                getMapPoint(region, 2);
+                return;
+            }
+        }
+        saveErrorRegion(regionName);
+        alert('未能获取当前输入行政区域');
+        regions.splice(0, 1);
+    }
+
+    function saveErrorRegion(errReg) {
+        xmlhttp.open('POST', "http://127.0.0.1:8888/comp/save/error/region", true);
+        xmlhttp.setRequestHeader("Content-type","application/json;charset=UTF-8");
+        let par = {
+            errReg
+        }
+        xmlhttp.send(JSON.stringify(par));
+        console.log(par)
+    }
+
+
+</script>
+<style type="text/css">
+    .process{
+        width: 70px;
+        height: 20px;
+        background-color: cornflowerblue
+    }
+</style>
+</html>
