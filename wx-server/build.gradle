@@ -1,0 +1,27 @@
+apply plugin: 'org.springframework.boot'
+group = 'cn.autumn'
+version = '0.0.1-SNAPSHOT'
+
+dependencies {
+    implementation project(':basic')
+    implementation group: 'org.projectlombok', name: 'lombok'
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml'
+
+    implementation group: 'com.alibaba', name: 'fastjson'
+    implementation group: 'com.google.code.gson', name: 'gson'
+    implementation group: 'cn.hutool', name: 'hutool-all'
+
+    implementation group: 'mysql', name: 'mysql-connector-java'
+    implementation group: 'com.baomidou', name: 'mybatis-plus-boot-starter'
+    implementation group: "org.springframework", name: 'spring-jdbc', version: '5.2.12.RELEASE'
+
+    implementation group: 'org.springframework.retry', name: 'spring-retry', version: '1.2.5.RELEASE'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+bootJar {
+    baseName('wx-server')
+    version('1.0')
+}

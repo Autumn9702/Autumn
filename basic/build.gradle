@@ -1,0 +1,22 @@
+apply plugin: 'java'
+group 'cn.autumn'
+version '0.0.1-SNAPSHOT'
+
+dependencies {
+    annotationProcessor group: 'org.projectlombok', name: 'lombok'
+    implementation 'org.projectlombok:lombok'
+    implementation group: 'org.hibernate', name: 'hibernate-spatial'
+    implementation group: 'com.vladmihalcea', name: 'hibernate-types-52'
+
+    implementation group: 'com.alibaba', name: 'fastjson'
+    implementation group: 'cn.hutool', name: 'hutool-all'
+    implementation group: 'com.google.code.gson', name: 'gson'
+
+    implementation group: 'org.springframework', name: 'spring-core'
+    implementation group: 'org.springframework.data', name: 'spring-data-commons', version: '2.3.6.RELEASE'
+
+    implementation group: 'com.baomidou', name: 'mybatis-plus-boot-starter'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
