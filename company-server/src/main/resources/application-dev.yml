@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://123.57.68.130:5432/lyg
+    username: general_system
+    password: zxsmart803
+#    url: jdbc:postgresql://127.0.0.1:5432/ces
+#    username: postgres
+#    password: chengzi

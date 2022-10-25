@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: dev
+
+  application:
+    name: comp-function
+    version: 1.1V
+
+server:
+  port: 8888

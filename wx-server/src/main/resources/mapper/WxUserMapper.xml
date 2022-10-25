@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.autumn.wxserver.mapper.WxUserMapper">
+
+    <select id="queryWxUserByUser" resultType="cn.autumn.entity.mysql.WxUser">
+        SELECT * FROM t_wx_user_server WHERE to_user = #{toUser}
+    </select>
+
+    <select id="queryWxUserByListToUser" resultType="cn.autumn.entity.mysql.WxUser">
+        SELECT *
+            FROM t_wx_user_server twus
+            <where>
+                <if test="list != null">
+
+                    <foreach collection="list" index="index" item="item" separator="or">
+                        twus.to_user = #{item}
+                    </foreach>
+                </if>
+            </where>
+    </select>
+</mapper>
