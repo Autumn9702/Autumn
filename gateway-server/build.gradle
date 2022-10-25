@@ -1,22 +1,14 @@
-plugins {
-    id 'org.springframework.boot' version '2.6.13'
-    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
-    id 'java'
-}
-
+apply plugin: 'org.springframework.boot'
 group = 'cn.autumn'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation group: 'io.netty', name: 'netty-all', version: '4.1.29.Final'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+bootJar {
+    baseName('gateway-server')
+    version('1.0')
 }

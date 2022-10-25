@@ -3,3 +3,4 @@ rootProject.name = 'Autumn'
 include('basic')
 include('wx-server')
 include('company-server')
+include('gateway-server')
